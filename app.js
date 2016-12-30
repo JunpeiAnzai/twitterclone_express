@@ -36,9 +36,6 @@ app.get('/', function(req, res) {
 
     connection.query(query, function(err, results) {
 
-        if (err) {
-            console.log(err);
-        }
 
         for (var i = 0; i < results.length; i++) {
             var tweet = results[i];
@@ -46,6 +43,25 @@ app.get('/', function(req, res) {
         }
 
         res.render('tweets', {tweets: results});
+    });
+});
+
+app.get('/tweets/:id([0-9]+)/edit', function(req, res) {
+    var query = 'SELECT * FROM Tweets WHERE id = ?';
+    var id = req.params.id;
+
+    connection.query(query, [id], function(err, results) {
+
+        if (err || results.length === 0) {
+            console.log(err || 'No tweet found.');
+            res.redirect('/');
+            return;
+        }
+
+        var tweet = results[0];
+        tweet.time_from_now = moment(tweet.created_at).fromNow();
+
+        res.render('edit-tweet', {tweet: tweet});
     });
 });
 
@@ -62,5 +78,20 @@ app.post('/tweets/create', function(req, res) {
         res.redirect('/');
     });
 
+});
+
+app.post('/tweets/:id([0-9]+)/update', function(req, res) {
+    var query = 'UPDATE Tweets SET body = ?, handle = ? WHERE id = ?';
+    var id = req.params.id;
+    var handle = req.body.handle;
+    var body = req.body.body;
+
+    connection.query(query, [body, handle, id], function(err, results) {
+        if (err) {
+            console.log(err);
+        }
+
+        res.redirect('/');
+    });
 });
 
